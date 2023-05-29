@@ -53,7 +53,7 @@ int Window::initialize()
 
 	// Create Window
 
-	mainWindow = glfwCreateWindow(width, height, "Main Window", NULL, NULL);
+	mainWindow = glfwCreateWindow(width, height, "Render Engine Window", NULL, NULL);
 
 	if (!mainWindow)
 	{

@@ -7,10 +7,11 @@
 #include <GL\glew.h>
 #include <GLFW\glfw3.h>
 #include <glm\glm.hpp>
-#include <glm\gtc\matrix_transform.hpp>
+//#include <glm\gtc\matrix_transform.hpp>
 #include <glm\gtc\type_ptr.hpp>
 
-#include"CommonValues.h"
+#include "CommonValues.h"
+#include "Utility.h"
 
 #include "Window.h"
 #include "Mesh.h"
@@ -20,11 +21,8 @@
 #include "DirectionalLight.h"
 #include "PointLight.h"
 #include "Material.h"
+#include "Entity.h"
 
-
-
- 
-const float toRadians = 3.14159265f / 180.0f;
 
 std::vector<Mesh*> meshList;
 std::vector<Shader> shaderList;
@@ -112,15 +110,15 @@ void CreateObjects()
 
 	
 	Mesh* obj1 = new  Mesh();
-	obj1->CreateMesh(vertices, indices, 32, 12);
+	obj1->CreateMesh(vertices, indices, 32, 12, 8);
 	meshList.push_back(obj1);
 
 	Mesh* obj2 = new  Mesh();
-	obj2->CreateMesh(vertices, indices, 32, 12);
+	obj2->CreateMesh(vertices, indices, 32, 12, 8);
 	meshList.push_back(obj2);
 
 	Mesh* obj3 = new  Mesh();
-	obj3->CreateMesh(floorVertices, floorIndices, 32, 6);
+	obj3->CreateMesh(floorVertices, floorIndices, 32, 6, 8);
 	meshList.push_back(obj3);
 }
 
@@ -145,20 +143,17 @@ int main()
 	CreateObjects();
 	CreateShaders();
 
-	camera = Camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), - 90.0f, 0.0f, 5.0f, 0.1f);
+	camera = Camera(glm::vec3(0.0f, 0.0f, 2.0f), glm::vec3(0.0f, 1.0f, 0.0f), - 90.0f, 0.0f, 5.0f, 0.1f);
 
 	brickTexture = Texture("src/Textures/brick.png");
-	brickTexture.loadTextureA();
 	dirtTexture = Texture("src/Textures/dirt.png");
-	dirtTexture.loadTextureA();
 	plainTexture = Texture("src/Textures/plain.png");
-	plainTexture.loadTextureA();
 
 	Material shinyMaterial(.0f, 32.0f);
 	Material dullMaterial(0.3f, 4.0f);
 
 	mainLight = DirectionalLight(1.0f, 1.0f, 1.0f, 
-								0.1f, 0.3f,
+								0.5f, 0.5f,
 								0.0f, 0.0f, -1.0f);
 
 	unsigned int pointLightCount = 0;
@@ -170,7 +165,7 @@ int main()
 	pointLightCount++;
 
 	pointLights[1] = PointLight(0.0f, 1.0f, 0.0f,
-								0.1f, 0.0f,
+								0.1f, 1.0f,
 								-4.0f, 2.0f, 0.0f,
 								0.3f, 0.1f, 0.1f);
 	pointLightCount++;
@@ -179,6 +174,16 @@ int main()
 		uniformSpecularIntensity = 0, uniformShininess = 0;
 
 	glm::mat4 projection = glm::perspective(45.0f, (float)mainWindow.getBufferWidth() / (float)mainWindow.getBufferHeight(), 0.1f, 100.0f);
+
+	Entity e1(glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(1.0f), *meshList[0], &shinyMaterial, &brickTexture);
+	e1.texture->loadTextureA();
+	
+	Entity e2(glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(1.0f), *meshList[1], &dullMaterial, &dirtTexture);
+	e2.texture->loadTextureA();
+
+	Entity e3(glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(1.0f), *meshList[2], &shinyMaterial, &plainTexture);
+	e3.texture->loadTextureA();
+
 
 	while (!mainWindow.getShouldClose())
 	{
@@ -196,7 +201,9 @@ int main()
 		camera.mouseControl(mainWindow.getXchange(), mainWindow.getYchange());
 
 		// Clear window screen
-		glClearColor(0.1f, 0.1f, 0.1f, 0.03f);
+
+		float color = Utility::linearInterpolation(0.0f, 1.0f, 0.0f, 255.0f, 64.0f);
+		glClearColor(color, color, color, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		shaderList[0].UseShader();
@@ -214,42 +221,24 @@ int main()
 		glUniformMatrix4fv(uniformView, 1, GL_FALSE, glm::value_ptr(camera.calculateViewMatrix()));
  		glUniform3f(uniformEyePosition, camera.getCameraPosition().x, camera.getCameraPosition().y, camera.getCameraPosition().z);
 
-		glm::mat4 model = glm::identity<glm::mat4>();
+		e1.setTransform(glm::vec3(0.0f), glm::vec3(0.0f, 45.0f, 0.0f), glm::vec3(1.0f, -1.0f, 1.0f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(e1.transform.transformMatrix));
+		e1.texture->useTexture();
+		e1.material->UseMateial(uniformSpecularIntensity, uniformShininess);
+		e1.mesh.RenderMesh();
 
-		glm::mat3 reflectMat(glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		e2.setTransform(glm::vec3(0.0f, 4.0f, 0.0f), glm::vec3(0.0f, 45.0f, 0.0f), glm::vec3(0.4f, 0.4f, 0.4f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(e2.transform.transformMatrix));
+		e2.texture->useTexture();
+		e2.material->UseMateial(uniformSpecularIntensity, uniformShininess);
+		e2.mesh.RenderMesh();
 
-		model = glm::translate(model, glm::vec3(0.0f, 0.0f, -2.5f));
-		model = model * glm::mat4(reflectMat);
-		//model = glm::rotate(model, 45 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
-		//model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
-		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		e3.setTransform(glm::vec3(0.0f, -2.0f, 0.0f), glm::vec3(0.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(e3.transform.transformMatrix));
+		e3.texture->useTexture();
+		e3.material->UseMateial(uniformSpecularIntensity, uniformShininess);
+		e3.mesh.RenderMesh();
 		
-		brickTexture.useTexture();
-		shinyMaterial.UseMateial(uniformSpecularIntensity, uniformShininess);
-		meshList[0]->RenderMesh();
-
-		model = glm::identity<glm::mat4>();
-		model = glm::translate(model, glm::vec3(0.0f, 4.0f, -2.5f));
-		model = glm::rotate(model, 15 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
-		model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.4f));
-		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-
-		dirtTexture.useTexture();
-		dullMaterial.UseMateial(uniformSpecularIntensity, uniformShininess);
-		meshList[1]->RenderMesh();
-
-		model = glm::identity<glm::mat4>();
-		model = glm::translate(model, glm::vec3(0.0f, -2.0f, 0.0f));
-		//model = glm::rotate(model, 15 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
-		//model = glm::scale(model, glm::vec3(0.4f, 0.4f, 1.0f));
-		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-
-		plainTexture.useTexture();
-		shinyMaterial.UseMateial(uniformSpecularIntensity, uniformShininess);
-		meshList[2]->RenderMesh();
-		
-
-
 
 		glUseProgram(0);
 		mainWindow.swapBuffers();
