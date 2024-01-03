@@ -1,10 +1,10 @@
 # OpenGLRenderEngineClone
 
-This repository houses an OpenGL rendering engine clone developed for educational purposes, focusing on learning Modern OpenGL, GLSL, and the render pipeline.
+This repository houses an OpenGL rendering engine clone developed while focusing on learning Modern OpenGL, GLSL, and the render pipeline.
 
 ## Description
 
-The project aims to provide a comprehensive understanding of rendering engines, employing Modern OpenGL and GLSL. It serves as an educational resource for individuals interested in learning about graphics programming and render pipelines.
+The project aims to implement a rendering engine, employing Modern OpenGL and GLSL. It serves as an avenue for learning about graphics programming and render pipelines.
 
 ## Dependencies
 
@@ -18,7 +18,7 @@ Note: The project is currently optimized for x64 architecture.
 
 ## Features Outcomes
 
-- **Learning Modern OpenGL**: Dive into modern OpenGL techniques and shaders.
+- **Modern OpenGL**: Dive into modern OpenGL techniques and shaders.
 - **Understanding** the render pipeline.
 - **Clear dependency management**.
 
